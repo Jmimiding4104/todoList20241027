@@ -16,12 +16,13 @@ class todoList(BaseModel):
     title: str
     description: str
     completed: bool = False
-    
+
     class Config:
         # 設置 ORM 模式以便於處理 MongoDB 的 ObjectId
         json_encoders = {
             ObjectId: str
         }
+
 
 # 資料庫
 dbName = 'python'
@@ -47,25 +48,25 @@ async def connect_to_mongo():
 
 @app.on_event("startup")
 async def startup_event():
-    await connect_to_mongo()  # 使用 await 调用
-    
+    await connect_to_mongo()
+
 
 # 取得所有 todoList
 @app.get("/todos/", response_model=List[todoList])
 async def get_all_todos():
     todos = []
-    for todo in collection.find():  # 取得所有資料的語法
+    for todo in collection.find():
         todo['_id'] = str(todo['_id'])
         todos.append(todo)
-    
+
     return todos
 
 
 # 建立新的 todoList
 @app.post("/todos/", response_model=todoList)
 async def create_todo(todo: todoList):
-    todo_dict = todo.dict()  # 使用 dict() 而不是 model_dump()
-    collection.insert_one(todo_dict)  # 不需要使用 await
+    todo_dict = todo.dict()
+    collection.insert_one(todo_dict)
     return todo
 
 
@@ -90,7 +91,7 @@ async def update_todo(id: str, updatedTodo: todoList):
     result = collection.update_one(
         {"_id": todo_id},  # 查找條件
         {"$set": {"title": updatedTodo.title, "description": updatedTodo.description,
-                  "completed": updatedTodo.completed}}  # 更新內容
+                  "completed": updatedTodo.completed}}
     )
     if result.matched_count > 0:
         updated_todo = await get_one_todos(id)
@@ -104,11 +105,8 @@ async def update_todo(id: str, updatedTodo: todoList):
 async def delete_todo(id: str):
     todo_id = ObjectId(id)
     result = collection.delete_one({"_id": todo_id})
-    
+
     if result.deleted_count > 0:
         raise HTTPException(status_code=200, detail="刪除成功")
     else:
         raise HTTPException(status_code=404, detail="請確認 ID")
-    
-    # 返回已刪除的 todo 的結構
-    
