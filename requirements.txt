@@ -1,1 +1,5 @@
 uvicorn
+fastapi
+pydantic 
+pymongo 
+bson 
